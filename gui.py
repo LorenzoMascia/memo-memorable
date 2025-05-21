@@ -30,12 +30,16 @@ class MemoryGameGUI:
         self._create_grid()
 
     def _create_grid(self):
+        for i in range(self.size):
+            self.window.grid_rowconfigure(i, weight=1)
+            self.window.grid_columnconfigure(i, weight=1)
+
         for i, key in enumerate(self.logic.blocks):
-            btn = tk.Button(self.window, text="?", width=6, height=3,
+            btn = tk.Button(self.window, text="?", font=("Arial", 12),
                             command=lambda k=key: self.on_click(k))
             row = i // self.size
             col = i % self.size
-            btn.grid(row=row, column=col, padx=2, pady=2)
+            btn.grid(row=row, column=col, sticky="nsew", padx=2, pady=2)
             self.buttons[key] = btn
 
     def on_click(self, key):
