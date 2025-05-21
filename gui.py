@@ -27,7 +27,22 @@ class MemoryGameGUI:
 
         self.logic = MemoryGameLogic(size)
         self.buttons = {}
+        self.first_choice = None
         self._create_grid()
+        self._add_reset_button()
+
+    def _add_reset_button(self):
+        reset_btn = tk.Button(self.window, text="Reset", font=("Arial", 12),
+                            command=self._reset_game)
+        reset_btn.grid(row=self.size + 1, column=0, columnspan=self.size, sticky="ew", pady=10)
+
+    def _reset_game(self):
+        for widget in self.window.winfo_children():
+            widget.destroy()
+        self.first_choice = None
+        self.logic = None
+        self._show_start_screen()
+
 
     def _create_grid(self):
         for i in range(self.size):
