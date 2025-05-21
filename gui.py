@@ -3,18 +3,39 @@ from game_logic import MemoryGameLogic
 
 class MemoryGameGUI:
     def __init__(self):
-        self.logic = MemoryGameLogic()
         self.window = tk.Tk()
         self.window.title("Memo Game")
+        self.logic = None
         self.buttons = {}
         self.first_choice = None
+        self.size = None
+        self._show_start_screen()
+
+    def _show_start_screen(self):
+        label = tk.Label(self.window, text="Select Grid Size", font=("Arial", 16))
+        label.pack(pady=10)
+
+        for size in [3, 6, 9]:
+            btn = tk.Button(self.window, text=f"{size}x{size}", width=10,
+                            command=lambda s=size: self._start_game(s))
+            btn.pack(pady=5)
+
+    def _start_game(self, size):
+        self.size = size
+        for widget in self.window.winfo_children():
+            widget.destroy()
+
+        self.logic = MemoryGameLogic(size)
+        self.buttons = {}
         self._create_grid()
 
     def _create_grid(self):
         for i, key in enumerate(self.logic.blocks):
-            btn = tk.Button(self.window, text="?", width=10, height=4,
+            btn = tk.Button(self.window, text="?", width=6, height=3,
                             command=lambda k=key: self.on_click(k))
-            btn.grid(row=i//3, column=i%3)
+            row = i // self.size
+            col = i % self.size
+            btn.grid(row=row, column=col, padx=2, pady=2)
             self.buttons[key] = btn
 
     def on_click(self, key):
@@ -24,7 +45,7 @@ class MemoryGameGUI:
         if not self.first_choice:
             self.first_choice = key
         else:
-            self.window.after(1000, self.check_match, self.first_choice, key)
+            self.window.after(800, self.check_match, self.first_choice, key)
             self.first_choice = None
 
     def check_match(self, key1, key2):
@@ -40,7 +61,7 @@ class MemoryGameGUI:
             for btn in self.buttons.values():
                 btn.config(state="disabled")
             win_label = tk.Label(self.window, text="You won!", font=("Arial", 20))
-            win_label.grid(row=3, column=0, columnspan=3)
+            win_label.grid(row=self.size, column=0, columnspan=self.size)
 
     def run(self):
         self.window.mainloop()

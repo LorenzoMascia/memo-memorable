@@ -1,8 +1,10 @@
 import random
 
 class MemoryGameLogic:
-    def __init__(self, pairs=3):
-        self.pairs = pairs
+    def __init__(self, size):
+        self.size = size  # es. 3, 6 o 9
+        self.num_blocks = size * size
+        self.pairs = self.num_blocks // 2
         self.blocks = self._generate_blocks()
         self.revealed = {}
 
