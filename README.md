@@ -1,15 +1,13 @@
-# 🧠 Memo Trainer
+# 🧠 Memo-Memorable
 
-**Memo Trainer** is an educational app designed to help you **memorize concepts** by matching terms with their definitions. Write custom pairs like `"Linked List"` ↔ `"class Node:"`, start the game, and train your memory by finding the correct matches!
+**Memo-Memorable** is a small educational memory game entirely built in **Python** using **Tkinter**, developed as a personal learning project.
+
+Unlike typical memory games, this app aims to be genuinely **useful for memorization**, allowing you to pair concepts with definitions, code snippets, translations, or any content you want to learn. Whether it's `"Linked List"` ↔ `"class Node:"` or `"hello"` ↔ `"ciao"`, you can train both your memory and your mind!
 
 ---
 
 ## 📸 Screenshots
 
-Place your app screenshots in the `screenshots/` folder and reference them here:
-
-![Start Screen](screenshots/start_screen.png)  
-![Game in Action](screenshots/game_screen.png)
 
 ---
 
