@@ -1,19 +1,15 @@
 import random
 
 class MemoryGameLogic:
-    def __init__(self, size):
-        self.size = size
-        self.num_blocks = size * size
-        self.pairs = self.num_blocks // 2
-        self.blocks = self._generate_blocks()
+    def __init__(self, pairs):
+        self.pairs = dict(pairs)
+        self.inverse_pairs = {v: k for k, v in pairs}
+        all_values = list(self.pairs.keys()) + list(self.pairs.values())
+        random.shuffle(all_values)
+        self.blocks = {f"block_{i}": val for i, val in enumerate(all_values)}
 
-    def _generate_blocks(self):
-        values = list(range(1, self.pairs + 1)) * 2
-        random.shuffle(values)
-        return {f"block_{i}": val for i, val in enumerate(values)}
-
-    def check_match(self, key1, key2):
-        return self.blocks[key1] == self.blocks[key2]
+    def check_match(self, val1, val2):
+        return self.pairs.get(val1) == val2 or self.inverse_pairs.get(val1) == val2
 
     def remove_blocks(self, key1, key2):
         del self.blocks[key1]

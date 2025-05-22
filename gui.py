@@ -2,55 +2,99 @@ import tkinter as tk
 import tkinter.font as tkFont
 from game_logic import MemoryGameLogic
 import time
-import os
 
 class MemoryGameGUI:
     def __init__(self):
         self.window = tk.Tk()
-        self.window.title("Memo Game")
-        self.window.configure(bg="#f4f4f4")
+        self.window.title("Memo Trainer")
+        self.window.configure(bg="#f9f9f9")
 
         default_font = tkFont.nametofont("TkDefaultFont")
-        default_font.configure(family="Helvetica", size=14)
+        default_font.configure(family="Segoe UI", size=12)
         self.window.option_add("*Font", default_font)
-
-        self.timer_label = None
-        self.start_time = None
-        self.timer_running = False
 
         self.logic = None
         self.buttons = {}
         self.first_choice = None
-        self.size = None
-        self._show_start_screen()
+        self.timer_label = None
+        self.start_time = None
+        self.timer_running = False
+        self.after_id = None  
+        self.waiting = False  
 
-    def _show_start_screen(self):
-        label = tk.Label(self.window, text="🧠 Select Grid Size", font=("Helvetica", 18, "bold"),
-                        bg="#f4f4f4", fg="#333")
-        label.pack(pady=20)
+        self.entries = []  
+        self._show_input_screen()
 
-        button_frame = tk.Frame(self.window, bg="#f4f4f4")
-        button_frame.pack(pady=10)
+    def _show_input_screen(self):
+        if self.after_id:
+            self.window.after_cancel(self.after_id)
+            self.after_id = None
 
-        for size in [2, 4, 6]:
-            btn = tk.Button(button_frame, text=f"{size}x{size}", width=10,
-                            height=2, bg="#007acc", fg="white", activebackground="#005f99",
-                            font=("Helvetica", 14, "bold"),
-                            command=lambda s=size: self._start_game(s))
-            btn.pack(pady=8)
-
-    def _start_game(self, size):
-        self.size = size
         for widget in self.window.winfo_children():
             widget.destroy()
 
-        self.logic = MemoryGameLogic(size)
-        self.buttons = {}
-        self.first_choice = None
+        title = tk.Label(self.window, text="🎓 Memorize Anything!", font=("Segoe UI", 16, "bold"),
+                         bg="#f9f9f9", fg="#333")
+        title.pack(pady=10)
 
-        # Timer label deve essere creata PRIMA di avviare il timer
-        self.timer_label = tk.Label(self.window, text="Time: 0s", bg="#f4f4f4", fg="#555", font=("Helvetica", 12))
-        self.timer_label.grid(row=0, column=0, columnspan=self.size, pady=(5, 10))
+        subtitle = tk.Label(self.window, text="Enter the pairs you want to memorize:\n(e.g., Term ↔ Definition)",
+                            font=("Segoe UI", 12), bg="#f9f9f9", fg="#555", justify="center")
+        subtitle.pack(pady=(0, 10))
+
+        example_frame = tk.Frame(self.window, bg="#f1f1f1", bd=1, relief="solid")
+        example_frame.pack(pady=5, padx=10, ipadx=5, ipady=5)
+        example_text = tk.Label(example_frame, text="Example:\nKey: Python\nValue: snake-like programming language",
+                                font=("Segoe UI", 10, "italic"), bg="#f1f1f1", fg="#777")
+        example_text.pack()
+
+        self.form_frame = tk.Frame(self.window, bg="#f9f9f9")
+        self.form_frame.pack()
+
+        self.entries.clear()
+        for _ in range(2):  # Start with 2 pairs
+            self._add_pair_fields()
+
+        add_btn = tk.Button(self.window, text="➕ Add Pair", command=self._add_pair_fields,
+                            font=("Segoe UI", 12), bg="#007bff", fg="white")
+        add_btn.pack(pady=10)
+
+        start_btn = tk.Button(self.window, text="▶ Start Game", command=self._start_game,
+                              font=("Segoe UI", 14), bg="#28a745", fg="white", padx=10, pady=5)
+        start_btn.pack(pady=20)
+
+    def _add_pair_fields(self):
+        pair_frame = tk.Frame(self.form_frame, bg="#f9f9f9")
+        pair_frame.pack(pady=5)
+
+        term_entry = tk.Entry(pair_frame, width=30)
+        def_entry = tk.Entry(pair_frame, width=30)
+
+        term_entry.pack(side=tk.LEFT, padx=5)
+        def_entry.pack(side=tk.LEFT, padx=5)
+
+        self.entries.append((term_entry, def_entry, pair_frame))
+
+    def _start_game(self):
+        pairs = []
+        for term_entry, def_entry, _ in self.entries:
+            term = term_entry.get().strip()
+            definition = def_entry.get().strip()
+            if term and definition:
+                pairs.append((term, definition))
+
+        if len(pairs) < 2:
+            tk.messagebox.showwarning("Error", "Please enter at least 2 valid pairs.")
+            return
+
+        self.logic = MemoryGameLogic(pairs)
+        self.first_choice = None
+        self.buttons = {}
+
+        for widget in self.window.winfo_children():
+            widget.destroy()
+
+        self.timer_label = tk.Label(self.window, text="Time: 0s", bg="#f9f9f9", fg="#555", font=("Segoe UI", 12))
+        self.timer_label.grid(row=0, column=0, columnspan=4, pady=5)
 
         self._create_grid()
         self._add_reset_button()
@@ -59,93 +103,74 @@ class MemoryGameGUI:
         self.timer_running = True
         self._start_timer()
 
-    def _start_timer(self):
-        if self.timer_running:
-            elapsed = int(time.time() - self.start_time)
-            self.timer_label.config(text=f"Time: {elapsed}s")
-            self.window.after(1000, self._start_timer)
-
-    def _add_reset_button(self):
-        reset_btn = tk.Button(self.window, text="🔁 Reset", font=("Helvetica", 14, "bold"),
-                      bg="#d9534f", fg="white", activebackground="#c9302c",
-                      command=self._reset_game)
-        reset_btn.grid(row=self.size + 1, column=0, columnspan=self.size, sticky="ew", pady=10)
-
-    def _reset_game(self):
-        for widget in self.window.winfo_children():
-            widget.destroy()
-        self.first_choice = None
-        self.logic = None
-        self._show_start_screen()
-
-
     def _create_grid(self):
-        for i in range(self.size):
-            self.window.grid_rowconfigure(i, weight=1)
-            self.window.grid_columnconfigure(i, weight=1)
-
-        for i, key in enumerate(self.logic.blocks):
-            btn = tk.Button(self.window, text="?", font=("Helvetica", 20, "bold"),
-                            bg="white", fg="#333", activebackground="#e6e6e6",
-                            relief="raised", bd=2,
-                            command=lambda k=key: self.on_click(k))
-            row = i // self.size
-            col = i % self.size
-            btn.grid(row=row, column=col, sticky="nsew", padx=2, pady=2)
+        keys = list(self.logic.blocks.keys())
+        cols = 4
+        for i, key in enumerate(keys):
+            row, col = (i // cols) + 1, i % cols
+            btn = tk.Button(self.window, text="?", font=("Segoe UI", 14, "bold"),
+                            width=20, height=2, wraplength=180,
+                            bg="white", relief="flat", bd=1, highlightbackground="#ccc",
+                            command=lambda k=key: self._on_click(k))
+            btn.grid(row=row, column=col, padx=6, pady=6)
             self.buttons[key] = btn
 
-    def on_click(self, key):
+    def _on_click(self, key):
+        if not self.logic or key not in self.logic.blocks or self.waiting:
+            return
+
+        if self.first_choice == key:
+            return
+
         value = self.logic.get_value(key)
-        self.buttons[key].config(text=str(value), state="disabled")
+        self.buttons[key].config(text=value, state="disabled", bg="#eef")
 
         if not self.first_choice:
             self.first_choice = key
         else:
             second_choice = key
-            self.window.after(800, self.check_match, self.first_choice, second_choice)
-            self.first_choice = None
+            val1 = self.logic.get_value(self.first_choice)
+            val2 = self.logic.get_value(second_choice)
 
-    def check_match(self, key1, key2):
-        if self.logic.check_match(key1, key2):
-            self.buttons[key1].config(bg="green")
-            self.buttons[key2].config(bg="green")
-            self.logic.remove_blocks(key1, key2)
-        else:
-            self.buttons[key1].config(text="?", state="normal")
-            self.buttons[key2].config(text="?", state="normal")
+            if self.logic.check_match(val1, val2):
+                self.logic.remove_blocks(self.first_choice, second_choice)
+                self.buttons[self.first_choice].config(bg="#28a745", fg="white")
+                self.buttons[second_choice].config(bg="#28a745", fg="white")
+                self.first_choice = None
+                
+                if self.logic.has_won():
+                    self.timer_running = False
+                    elapsed = int(time.time() - self.start_time)
+                    win_label = tk.Label(self.window, text=f"🎉 You won in {elapsed} seconds!",
+                                        font=("Segoe UI", 18, "bold"), bg="#f9f9f9", fg="#28a745")
+                    win_label.grid(row=10, column=0, columnspan=4, pady=15)
+            else:
+                self.waiting = True
+                first = self.first_choice  
+                self.first_choice = None
+                
+                def reset():
+                    if first in self.buttons:  
+                        self.buttons[first].config(text="?", state="normal", bg="white")
+                    if second_choice in self.buttons:
+                        self.buttons[second_choice].config(text="?", state="normal", bg="white")
+                    self.waiting = False
+                
+                self.window.after(1000, reset)
 
-        if self.logic.has_won():
-            self.timer_running = False
+    def _start_timer(self):
+        if self.timer_running:
             elapsed = int(time.time() - self.start_time)
-            for btn in self.buttons.values():
-                btn.config(state="disabled")
+            try:
+                self.timer_label.config(text=f"Time: {elapsed}s")
+            except tk.TclError:
+                return
+            self.after_id = self.window.after(1000, self._start_timer)
 
-            win_label = tk.Label(self.window, text=f"🎉 You won in {elapsed} seconds!", 
-                                font=("Helvetica", 24, "bold"), bg="#f4f4f4", fg="green")
-            win_label.grid(row=self.size + 2, column=0, columnspan=self.size, pady=10)
-
-            self._save_highscore(elapsed)
-
-    def _save_highscore(self, elapsed):
-        filename = "highscores.txt"
-        key = f"{self.size}x{self.size}"
-
-        highscores = {}
-        if os.path.exists(filename):
-            with open(filename, "r") as f:
-                for line in f:
-                    if ":" in line:
-                        mode, score = line.strip().split(":")
-                        highscores[mode] = int(score)
-
-        if key not in highscores or elapsed < highscores[key]:
-            highscores[key] = elapsed
-            with open(filename, "w") as f:
-                for mode, score in highscores.items():
-                    f.write(f"{mode}:{score}\n")
-
-            print(f"🏆 New record for {key} mode: {elapsed}s!")
-
+    def _add_reset_button(self):
+        reset_btn = tk.Button(self.window, text="🔁 New Game", font=("Segoe UI", 12, "bold"),
+                              bg="#d9534f", fg="white", command=self._show_input_screen)
+        reset_btn.grid(row=20, column=0, columnspan=4, sticky="ew", pady=10, padx=20)
 
     def run(self):
         self.window.mainloop()
