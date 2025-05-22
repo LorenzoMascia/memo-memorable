@@ -110,31 +110,47 @@ class MemoryGameGUI:
         # Load template data
         template_pairs = TEMPLATES[template_name]
         for key, value in template_pairs:
-            pair_frame = tk.Frame(self.form_frame, bg="#f9f9f9")
-            pair_frame.pack(pady=5)
+            self._add_pair_fields(key, value)
 
-            term_entry = tk.Entry(pair_frame, width=30)
-            def_entry = tk.Entry(pair_frame, width=30)
-
-            term_entry.insert(0, key)
-            def_entry.insert(0, value)
-
-            term_entry.pack(side=tk.LEFT, padx=5)
-            def_entry.pack(side=tk.LEFT, padx=5)
-
-            self.entries.append((term_entry, def_entry, pair_frame))
-
-    def _add_pair_fields(self):
+    def _add_pair_fields(self, key="", value=""):
         pair_frame = tk.Frame(self.form_frame, bg="#f9f9f9")
         pair_frame.pack(pady=5)
 
         term_entry = tk.Entry(pair_frame, width=30)
         def_entry = tk.Entry(pair_frame, width=30)
+        term_entry.insert(0, key)
+        def_entry.insert(0, value)
+
+        remove_btn = tk.Button(
+            pair_frame,
+            text="❌",
+            command=lambda: self._remove_pair(pair_frame, term_entry, def_entry),
+            font=("Segoe UI", 10),
+            fg="red",
+            bg="#ffe6e6",
+            relief="flat"
+        )
 
         term_entry.pack(side=tk.LEFT, padx=5)
         def_entry.pack(side=tk.LEFT, padx=5)
+        remove_btn.pack(side=tk.LEFT, padx=2)
 
         self.entries.append((term_entry, def_entry, pair_frame))
+
+    def _remove_pair(self, frame, term_entry, def_entry):
+        try:
+            index_to_remove = None
+            for i, (t, d, f) in enumerate(self.entries):
+                if f == frame and t == term_entry and d == def_entry:
+                    index_to_remove = i
+                    break
+
+            if index_to_remove is not None:
+                self.entries.pop(index_to_remove)
+
+            frame.destroy()
+        except Exception as e:
+            print("Error removing pair:", e)
 
     def _start_game(self):
         pairs = []
