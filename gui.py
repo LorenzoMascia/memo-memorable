@@ -1,6 +1,8 @@
 import tkinter as tk
 import tkinter.font as tkFont
 from game_logic import MemoryGameLogic
+import time
+import os
 
 class MemoryGameGUI:
     def __init__(self):
@@ -11,6 +13,10 @@ class MemoryGameGUI:
         default_font = tkFont.nametofont("TkDefaultFont")
         default_font.configure(family="Helvetica", size=14)
         self.window.option_add("*Font", default_font)
+
+        self.timer_label = None
+        self.start_time = None
+        self.timer_running = False
 
         self.logic = None
         self.buttons = {}
@@ -41,8 +47,23 @@ class MemoryGameGUI:
         self.logic = MemoryGameLogic(size)
         self.buttons = {}
         self.first_choice = None
+
+        # Timer label deve essere creata PRIMA di avviare il timer
+        self.timer_label = tk.Label(self.window, text="Time: 0s", bg="#f4f4f4", fg="#555", font=("Helvetica", 12))
+        self.timer_label.grid(row=0, column=0, columnspan=self.size, pady=(5, 10))
+
         self._create_grid()
         self._add_reset_button()
+
+        self.start_time = time.time()
+        self.timer_running = True
+        self._start_timer()
+
+    def _start_timer(self):
+        if self.timer_running:
+            elapsed = int(time.time() - self.start_time)
+            self.timer_label.config(text=f"Time: {elapsed}s")
+            self.window.after(1000, self._start_timer)
 
     def _add_reset_button(self):
         reset_btn = tk.Button(self.window, text="🔁 Reset", font=("Helvetica", 14, "bold"),
@@ -80,7 +101,8 @@ class MemoryGameGUI:
         if not self.first_choice:
             self.first_choice = key
         else:
-            self.window.after(800, self.check_match, self.first_choice, key)
+            second_choice = key
+            self.window.after(800, self.check_match, self.first_choice, second_choice)
             self.first_choice = None
 
     def check_match(self, key1, key2):
@@ -93,11 +115,37 @@ class MemoryGameGUI:
             self.buttons[key2].config(text="?", state="normal")
 
         if self.logic.has_won():
+            self.timer_running = False
+            elapsed = int(time.time() - self.start_time)
             for btn in self.buttons.values():
                 btn.config(state="disabled")
-            win_label = tk.Label(self.window, text="🎉 You won!", font=("Helvetica", 24, "bold"),
-                     bg="#f4f4f4", fg="green")
+
+            win_label = tk.Label(self.window, text=f"🎉 You won in {elapsed} seconds!", 
+                                font=("Helvetica", 24, "bold"), bg="#f4f4f4", fg="green")
             win_label.grid(row=self.size + 2, column=0, columnspan=self.size, pady=10)
+
+            self._save_highscore(elapsed)
+
+    def _save_highscore(self, elapsed):
+        filename = "highscores.txt"
+        key = f"{self.size}x{self.size}"
+
+        highscores = {}
+        if os.path.exists(filename):
+            with open(filename, "r") as f:
+                for line in f:
+                    if ":" in line:
+                        mode, score = line.strip().split(":")
+                        highscores[mode] = int(score)
+
+        if key not in highscores or elapsed < highscores[key]:
+            highscores[key] = elapsed
+            with open(filename, "w") as f:
+                for mode, score in highscores.items():
+                    f.write(f"{mode}:{score}\n")
+
+            print(f"🏆 New record for {key} mode: {elapsed}s!")
+
 
     def run(self):
         self.window.mainloop()
