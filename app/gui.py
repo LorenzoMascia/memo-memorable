@@ -1,7 +1,9 @@
 import tkinter as tk
 import tkinter.font as tkFont
+from tkinter import filedialog
 from app.game_logic import MemoryGameLogic
 import time
+import json
 
 # Predefined templates
 TEMPLATES = {
@@ -90,9 +92,20 @@ class MemoryGameGUI:
         for _ in range(2):  # Start with 2 pairs
             self._add_pair_fields()
 
-        add_btn = tk.Button(self.window, text="➕ Add Pair", command=self._add_pair_fields,
+        button_frame = tk.Frame(self.window, bg="#f9f9f9")
+        button_frame.pack(pady=10)
+
+        add_btn = tk.Button(button_frame, text="➕ Add Pair", command=self._add_pair_fields,
                             font=("Segoe UI", 12), bg="#007bff", fg="white")
-        add_btn.pack(pady=10)
+        add_btn.pack(side=tk.LEFT, padx=5)
+
+        save_btn = tk.Button(button_frame, text="💾 Save Set", command=self._save_set,
+                             font=("Segoe UI", 12), bg="#ffc107", fg="black")
+        save_btn.pack(side=tk.LEFT, padx=5)
+
+        load_btn = tk.Button(button_frame, text="📂 Load Set", command=self._load_set,
+                             font=("Segoe UI", 12), bg="#6c757d", fg="white")
+        load_btn.pack(side=tk.LEFT, padx=5)
 
         start_btn = tk.Button(self.window, text="▶ Start Game", command=self._start_game,
                               font=("Segoe UI", 14), bg="#28a745", fg="white", padx=10, pady=5)
@@ -235,6 +248,56 @@ class MemoryGameGUI:
                     self.waiting = False
 
                 self.window.after(1000, reset)
+    def _save_set(self):
+        pairs = []
+        for term_entry, def_entry, _ in self.entries:
+            key = term_entry.get().strip()
+            value = def_entry.get().strip()
+            if key and value:
+                pairs.append((key, value))
+
+        if not pairs:
+            tk.messagebox.showwarning("Error", "No valid pairs to save.")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            title="Save Memory Set"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(pairs, f, ensure_ascii=False, indent=4)
+                tk.messagebox.showinfo("Success", "Set saved successfully!")
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"Could not save the file:\n{e}")
+
+    def _load_set(self):
+        file_path = filedialog.askopenfilename(
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            title="Load Memory Set"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    pairs = json.load(f)
+
+                # Clear existing entries
+                for _, _, frame in self.entries:
+                    frame.destroy()
+                self.entries.clear()
+
+                # Load new ones
+                for key, value in pairs:
+                    self._add_pair_fields(key, value)
+
+                self.selected_template.set("Custom")
+                tk.messagebox.showinfo("Success", "Set loaded successfully!")
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"Invalid JSON or file:\n{e}")
 
     def _start_timer(self):
         if self.timer_running:
