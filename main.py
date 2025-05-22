@@ -1,4 +1,4 @@
-from gui import MemoryGameGUI
+from app.gui import MemoryGameGUI
 
 if __name__ == "__main__":
     app = MemoryGameGUI()

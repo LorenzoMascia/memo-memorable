@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.font as tkFont
-from game_logic import MemoryGameLogic
+from app.game_logic import MemoryGameLogic
 import time
 
 class MemoryGameGUI:

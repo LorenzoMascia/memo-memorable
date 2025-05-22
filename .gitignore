@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS/Linux/Windows system files
+.DS_Store
+Thumbs.db
+
+# Log and test artifacts
+*.log
+coverage/
+htmlcov/
+
+# Python test cache
+.pytest_cache/
+
+# Others
+*.sqlite3
+*.db
