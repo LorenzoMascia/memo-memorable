@@ -3,6 +3,32 @@ import tkinter.font as tkFont
 from app.game_logic import MemoryGameLogic
 import time
 
+# Predefined templates
+TEMPLATES = {
+    "Custom": [],
+    "Numbers 4x4": [(str(i), str(i)) for i in range(1, 9)],
+    "English Words A1": [
+        ("hello", "ciao"),
+        ("goodbye", "arrivederci"),
+        ("thank you", "grazie"),
+        ("yes", "sì"),
+        ("no", "no"),
+        ("book", "libro"),
+        ("car", "macchina"),
+        ("house", "casa")
+    ],
+    "Italian Food": [
+        ("pizza", "pizza"),
+        ("pasta", "pasta"),
+        ("gelato", "ice cream"),
+        ("espresso", "espresso"),
+        ("mozzarella", "mozzarella"),
+        ("bruschetta", "bruschetta"),
+        ("lasagna", "lasagna"),
+        ("carbonara", "carbonara")
+    ]
+}
+
 class MemoryGameGUI:
     def __init__(self):
         self.window = tk.Tk()
@@ -19,10 +45,11 @@ class MemoryGameGUI:
         self.timer_label = None
         self.start_time = None
         self.timer_running = False
-        self.after_id = None  
-        self.waiting = False  
+        self.after_id = None
+        self.waiting = False
 
-        self.entries = []  
+        self.entries = []  # pairs entered by user
+        self.selected_template = tk.StringVar(value="Custom")  # Template selected
         self._show_input_screen()
 
     def _show_input_screen(self):
@@ -40,6 +67,15 @@ class MemoryGameGUI:
         subtitle = tk.Label(self.window, text="Enter the pairs you want to memorize:\n(e.g., Term ↔ Definition)",
                             font=("Segoe UI", 12), bg="#f9f9f9", fg="#555", justify="center")
         subtitle.pack(pady=(0, 10))
+
+        # Dropdown menu
+        template_frame = tk.Frame(self.window, bg="#f9f9f9")
+        template_frame.pack(pady=5)
+
+        tk.Label(template_frame, text="Select Template:", font=("Segoe UI", 12), bg="#f9f9f9").pack(side=tk.LEFT)
+        dropdown = tk.OptionMenu(template_frame, self.selected_template, *TEMPLATES.keys(), command=self._load_template)
+        dropdown.config(width=20, font=("Segoe UI", 12))
+        dropdown.pack(side=tk.LEFT, padx=5)
 
         example_frame = tk.Frame(self.window, bg="#f1f1f1", bd=1, relief="solid")
         example_frame.pack(pady=5, padx=10, ipadx=5, ipady=5)
@@ -61,6 +97,32 @@ class MemoryGameGUI:
         start_btn = tk.Button(self.window, text="▶ Start Game", command=self._start_game,
                               font=("Segoe UI", 14), bg="#28a745", fg="white", padx=10, pady=5)
         start_btn.pack(pady=20)
+
+        # Load current template
+        self._load_template(self.selected_template.get())
+
+    def _load_template(self, template_name):
+        # Clear all entries
+        for _, _, frame in self.entries:
+            frame.destroy()
+        self.entries.clear()
+
+        # Load template data
+        template_pairs = TEMPLATES[template_name]
+        for key, value in template_pairs:
+            pair_frame = tk.Frame(self.form_frame, bg="#f9f9f9")
+            pair_frame.pack(pady=5)
+
+            term_entry = tk.Entry(pair_frame, width=30)
+            def_entry = tk.Entry(pair_frame, width=30)
+
+            term_entry.insert(0, key)
+            def_entry.insert(0, value)
+
+            term_entry.pack(side=tk.LEFT, padx=5)
+            def_entry.pack(side=tk.LEFT, padx=5)
+
+            self.entries.append((term_entry, def_entry, pair_frame))
 
     def _add_pair_fields(self):
         pair_frame = tk.Frame(self.form_frame, bg="#f9f9f9")
@@ -137,25 +199,25 @@ class MemoryGameGUI:
                 self.buttons[self.first_choice].config(bg="#28a745", fg="white")
                 self.buttons[second_choice].config(bg="#28a745", fg="white")
                 self.first_choice = None
-                
+
                 if self.logic.has_won():
                     self.timer_running = False
                     elapsed = int(time.time() - self.start_time)
                     win_label = tk.Label(self.window, text=f"🎉 You won in {elapsed} seconds!",
-                                        font=("Segoe UI", 18, "bold"), bg="#f9f9f9", fg="#28a745")
+                                         font=("Segoe UI", 18, "bold"), bg="#f9f9f9", fg="#28a745")
                     win_label.grid(row=10, column=0, columnspan=4, pady=15)
             else:
                 self.waiting = True
-                first = self.first_choice  
+                first = self.first_choice
                 self.first_choice = None
-                
+
                 def reset():
-                    if first in self.buttons:  
+                    if first in self.buttons:
                         self.buttons[first].config(text="?", state="normal", bg="white")
                     if second_choice in self.buttons:
                         self.buttons[second_choice].config(text="?", state="normal", bg="white")
                     self.waiting = False
-                
+
                 self.window.after(1000, reset)
 
     def _start_timer(self):
