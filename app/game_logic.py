@@ -12,11 +12,14 @@ class MemoryGameLogic:
         return self.pairs.get(val1) == val2 or self.inverse_pairs.get(val1) == val2
 
     def remove_blocks(self, key1, key2):
-        del self.blocks[key1]
-        del self.blocks[key2]
+        if key1 in self.blocks:
+            del self.blocks[key1]
+        if key2 in self.blocks:
+            del self.blocks[key2]
 
     def get_value(self, key):
         return self.blocks.get(key)
 
     def has_won(self):
         return len(self.blocks) == 0
+
